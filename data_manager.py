@@ -21,6 +21,12 @@ import random
 class Data_Factory():
 
     def load(self, path):
+        '''
+        加载数据数据：
+        R为评分数据，D_all为item doc数据
+        :param path:parent dir
+        :return:R,D_all为item
+        '''
         R = pickl.load(open(path + "/ratings.all", "rb"))
         print("Load preprocessed rating data - %s" % (path + "/ratings.all"))
         D_all = pickl.load(open(path + "/document.all", "rb"))

@@ -11,8 +11,8 @@ from keras.models import Model
 
 np.random.seed(1337)
 
-from keras.layers.convolutional import Convolution2D, MaxPooling2D, Conv2D, Conv1D
-from keras.layers.core import Reshape, Flatten, Dropout, Dense
+from keras.layers.convolutional import Conv1D
+from keras.layers.core import Dropout, Dense
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 
@@ -30,13 +30,13 @@ class CNN_module():
         self.max_len = max_len
         max_features = vocab_size
         vanila_dimension = 200
-        projection_dimension = output_dimesion
+        projection_dimension = output_dimesion #输出层
 
         filter_lengths = [3, 4, 5]
 
         '''Embedding Layer'''
         inputs = Input(name='input', shape=(max_len,), dtype='int32')
-
+        # 加载动态词向量还是静态词向量
         if init_W is None:
             embed_x = Embedding(max_features, emb_dim, input_length=max_len, name='sentence_embeddings')(inputs)
         else:
@@ -44,10 +44,8 @@ class CNN_module():
         conv_list = []
         '''Convolution Layer & Max Pooling Layer'''
         for i in filter_lengths:
-            # embed_x = Reshape(target_shape=(1, self.max_len, emb_dim), input_shape=(self.max_len, emb_dim))(embed_x)
             feature_map = Conv1D(nb_filters, i, activation="relu",name="conv_"+str(i))(embed_x)
             max_x = GlobalMaxPooling1D(name="max_pooling_"+str(i))(feature_map)
-            # max_x = Flatten()(max_x)
             conv_list.append( max_x )
         ## concat all conv output vector into a long vector
         sentence_vector = keras.layers.concatenate(conv_list)

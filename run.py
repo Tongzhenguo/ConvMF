@@ -6,6 +6,7 @@ Created on Dec 9, 2015
 import argparse
 import sys
 from data_manager import Data_Factory
+from models import ConvMF
 
 parser = argparse.ArgumentParser()
 
@@ -48,7 +49,7 @@ parser.add_argument("-u", "--lambda_u", type=float,
 parser.add_argument("-v", "--lambda_v", type=float,
                     help="Value of item regularizer")
 parser.add_argument("-n", "--max_iter", type=int,
-                    help="Value of max iteration (default: 1)", default=1)
+                    help="Value of max iteration (default: 5)", default=5)
 parser.add_argument("-w", "--num_kernel_per_ws", type=int,
                     help="Number of kernels per window size for CNN module (default: 100)", default=100)
 
@@ -63,6 +64,7 @@ if aux_path is None:
 
 data_factory = Data_Factory()
 
+# data processing task or model training task
 if do_preprocess:
     path_rating = args.raw_rating_data_path
     path_itemtext = args.raw_item_document_data_path
@@ -112,24 +114,24 @@ else:
     print("\tdimension: %d\n\tlambda_u: %.4f\n\tlambda_v: %.4f\n\tmax_iter: %d\n\tnum_kernel_per_ws: %d"
           % (dimension, lambda_u, lambda_v, max_iter, num_kernel_per_ws))
     print("===========================================================================================")
-
+    # 加载原始评分数据和物品文档描述文本
     R, D_all = data_factory.load(aux_path)
+    # 加载词序列
     CNN_X = D_all['X_sequence']
+    # 留出一位0用作填充和其他标识用
     vocab_size = len(D_all['X_vocab']) + 1
-
-    from models import ConvMF
-
+    #初始化词向量
     if pretrain_w2v is None:
         init_W = None
     else:
         init_W = data_factory.read_pretrained_word2vec(
             pretrain_w2v, D_all['X_vocab'], emb_dim)
-
+    #加载训练集，验证集与测试集
     train_user = data_factory.read_rating(data_path + '/train_user.dat')
     train_item = data_factory.read_rating(data_path + '/train_item.dat')
     valid_user = data_factory.read_rating(data_path + '/valid_user.dat')
     test_user = data_factory.read_rating(data_path + '/test_user.dat')
-
+    #训练模型，更新u,v,w权重
     ConvMF(max_iter=max_iter, res_dir=res_dir,
            lambda_u=lambda_u, lambda_v=lambda_v, dimension=dimension, vocab_size=vocab_size, init_W=init_W, give_item_weight=give_item_weight, CNN_X=CNN_X, emb_dim=emb_dim, num_kernel_per_ws=num_kernel_per_ws,
            train_user=train_user, train_item=train_item, valid_user=valid_user, test_user=test_user, R=R)
